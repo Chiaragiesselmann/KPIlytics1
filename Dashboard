@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KPIlytics - Hotel Analytics Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #1a1a1a;
+            --secondary: #2a2a2a;
+            --surface: #1e1e1e;
+            --surface-light: #252525;
+            --accent: #00d4aa;
+            --accent-light: #1ee8c4;
+            --accent-dark: #00b894;
+            --gold: #ffd700;
+            --orange: #ff6b35;
+            --blue: #4a90e2;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --text-muted: #707070;
+            --border: #333333;
+            --border-light: #404040;
+            --success: #00d4aa;
+            --warning: #ffb74d;
+            --error: #ff5252;
+            --revenue: #4a90e2;
+            --occupancy: #00d4aa;
+            --adr: #ffd700;
+            --revpar: #ff6b35;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0f0f0f 100%);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: rgba(30, 30, 30, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-light));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            color: var(--primary);
+            font-size: 0.9rem;
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.02em;
+        }
+
+        .nav-center {
+            display: flex;
+            gap: 0;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 0;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+            position: relative;
+        }
+
+        .nav-links a:hover {
+            color: var(--accent);
+            background: rgba(0, 212, 170, 0.1);
+        }
+
+        .nav-links a.active {
+            color: var(--accent);
+            background: rgba(0, 212, 170, 0.15);
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--accent-light));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .role-badge {
+            background: rgba(0, 212, 170, 0.2);
+            color: var(--accent);
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-logout {
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .btn-logout:hover {
+            border-color: var(--error);
+            color: var(--error);
+        }
+
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .page-header {
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .header-left h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .header-left p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .hotel-info {
+            text-align: right;
+            color: var(--text-secondary);
+        }
+
+        .hotel-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .metrics-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 212, 170, 0.15);
+            border-color: var(--accent);
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--accent);
+        }
+
+        .metric-card.revenue::before { background: var(--revenue); }
+        .metric-card.occupancy::before { background: var(--occupancy); }
+        .metric-card.adr::before { background: var(--adr); }
+        .metric-card.revpar::before { background: var(--revpar); }
+
+        .metric-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .metric-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .metric-icon.revenue { background: rgba(74, 144, 226, 0.2); color: var(--revenue); }
+        .metric-icon.occupancy { background: rgba(0, 212, 170, 0.2); color: var(--occupancy); }
+        .metric-icon.adr { background: rgba(255, 215, 0, 0.2); color: var(--adr); }
+        .metric-icon.revpar { background: rgba(255, 107, 53, 0.2); color: var(--revpar); }
+
+        .metric-trend {
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+        }
+
+        .metric-trend.up {
+            background: rgba(0, 212, 170, 0.2);
+            color: var(--success);
+        }
+
+        .metric-trend.down {
+            background: rgba(255, 82, 82, 0.2);
+            color: var(--error);
+        }
+
+        .metric-value {
+            font-size: 2.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+            letter-spacing: -0.02em;
+        }
+
+        .metric-label {
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .controls-panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .controls-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .controls-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .department-selector {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .dept-chip {
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .dept-chip.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: var(--primary);
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .control-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .control-input {
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .control-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(0, 212, 170, 0.1);
+        }
+
+        .benchmark-toggle {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: rgba(0, 212, 170, 0.1);
+            border: 1px solid rgba(0, 212, 170, 0.3);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .benchmark-toggle:hover {
+            background: rgba(0, 212, 170, 0.15);
+        }
+
+        .toggle-switch {
+            width: 44px;
+            height: 24px;
+            background: var(--border);
+            border-radius: 12px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-switch.active {
+            background: var(--accent);
+        }
+
+        .toggle-slider {
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .toggle-switch.active .toggle-slider {
+            transform: translateX(20px);
+        }
+
+        .chart-section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .chart-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.01em;
+        }
+
+        .chart-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+        }
+
+        .chart-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .chart-type-selector {
+            display: flex;
+            background: var(--surface-light);
+            border-radius: 6px;
+            padding: 2px;
+        }
+
+        .chart-type-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .chart-type-btn.active {
+            background: var(--accent);
+            color: var(--primary);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 450px;
+        }
+
+        .insights-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .insight-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .insight-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 212, 170, 0.1);
+            border-color: var(--accent);
+        }
+
+        .insight-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .insight-icon {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 10px rgba(0, 212, 170, 0.5);
+        }
+
+        .insight-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .insight-priority {
+            margin-left: auto;
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .insight-priority.high {
+            background: rgba(255, 82, 82, 0.2);
+            color: var(--error);
+        }
+
+        .insight-priority.medium {
+            background: rgba(255, 183, 77, 0.2);
+            color: var(--warning);
+        }
+
+        .insight-priority.low {
+            background: rgba(0, 212, 170, 0.2);
+            color: var(--success);
+        }
+
+        .insight-content {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .insight-metric {
+            display: inline-block;
+            background: var(--accent);
+            color: var(--primary);
+            padding: 0.125rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin: 0 0.25rem;
+        }
+
+        .insight-action {
+            background: rgba(0, 212, 170, 0.1);
+            border: 1px solid rgba(0, 212, 170, 0.3);
+            border-radius: 6px;
+            padding: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .insight-action-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 0.25rem;
+            text-transform: uppercase;
+        }
+
+        .insight-action-text {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(30, 30, 30, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            z-index: 10;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border);
+            border-top: 3px solid var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .nav-container {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .nav-center {
+                order: 3;
+                width: 100%;
+                justify-content: center;
+            }
+
+            .main-container {
+                padding: 1rem;
+            }
+
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .metrics-overview {
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            }
+
+            .department-selector {
+                flex-wrap: wrap;
+            }
+
+            .controls-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .insights-section {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <div class="logo-icon">K</div>
+                <div class="logo-text">KPIlytics</div>
+            </div>
+            <div class="nav-center">
+                <ul class="nav-links">
+                    <li><a href="#" class="active">Dashboard</a></li>
+                    <li><a href="#" onclick="navigateToUpload()">Upload</a></li>
+                    <li><a href="#" onclick="navigateToAnalysis()">Analyse</a></li>
+                    <li><a href="#" onclick="navigateToReports()">Reports</a></li>
+                    <li><a href="#" onclick="navigateToSettings()">Einstellungen</a></li>
+                </ul>
+            </div>
+            <div class="nav-right">
+                <div class="user-info">
+                    <div class="user-avatar">MH</div>
+                    <div>
+                        <div style="font-weight: 600; color: var(--text-primary);">Max Mustermann</div>
+                        <div class="role-badge">General Manager</div>
+                    </div>
+                </div>
+                <a href="#" class="btn-logout" onclick="logout()">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <div class="page-header">
+            <div class="header-left">
+                <h1>Hotel Analytics Dashboard</h1>
+                <p>Umfassende KPI-Analyse für optimierte Hotelperformance</p>
+            </div>
+            <div class="hotel-info">
+                <div class="hotel-name">Hotel Zur Goldenen Krone</div>
+                <div>45 Zimmer • 4-Sterne • Hannover</div>
+                <div>Berichtszeitraum: Juni 2024</div>
+            </div>
+        </div>
+
+        <div class="metrics-overview">
+            <div class="metric-card revenue">
+                <div class="metric-header">
+                    <div class="metric-icon revenue">€</div>
+                    <div class="metric-trend up">+14.2%</div>
+                </div>
+                <div class="metric-value">€47,236</div>
+                <div class="metric-label">Gesamtumsatz</div>
+            </div>
+            <div class="metric-card occupancy">
+                <div class="metric-header">
+                    <div class="metric-icon occupancy">%</div>
+                    <div class="metric-trend up">+8.5%</div>
+                </div>
+                <div class="metric-value">78.4%</div>
+                <div class="metric-label">Auslastung</div>
+            </div>
+            <div class="metric-card adr">
+                <div class="metric-header">
+                    <div class="metric-icon adr">Ø</div>
+                    <div class="metric-trend up">+5.2%</div>
+                </div>
+                <div class="metric-value">€89.50</div>
+                <div class="metric-label">ADR (Ø Zimmerpreis)</div>
+            </div>
+            <div class="metric-card revpar">
+                <div class="metric-header">
+                    <div class="metric-icon revpar">R</div>
+                    <div class="metric-trend up">+23.8%</div>
+                </div>
+                <div class="metric-value">€70.18</div>
+                <div class="metric-label">RevPAR</div>
+            </div>
+        </div>
+
+        <div class="controls-panel">
+            <div class="controls-header">
+                <h3 class="controls-title">Analyse-Einstellungen</h3>
+                <div class="department-selector">
+                    <div class="dept-chip active" data-dept="front-office">Front Office</div>
+                    <div class="dept-chip" data-dept="restaurant">Restaurant</div>
+                    <div class="dept-chip" data-dept="housekeeping">Housekeeping</div>
+                    <div class="dept-chip" data-dept="events">Events</div>
+                    <div class="dept-chip" data-dept="marketing">Marketing</div>
+                </div>
+            </div>
+            <div class="controls-grid">
+                <div class="control-group">
+                    <label class="control-label">KPI auswählen</label>
+                    <select id="kpiSelect" class="control-input" onchange="updateDashboard()">
+                        <option value="revenue">Umsatz</option>
+                        <option value="occupancy">Auslastung</option>
+                        <option value="adr">ADR (Average Daily Rate)</option>
+                        <option value="revpar">RevPAR</option>
+                        <option value="food-cost">Food Cost %</option>
+                        <option value="labor-cost">Personalkosten %</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Zeitraum von</label>
+                    <input type="month" id="timeStart" value="2024-01" class="control-input" onchange="updateDashboard()">
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Zeitraum bis</label>
+                    <input type="month" id="timeEnd" value="2024-06" class="control-input" onchange="updateDashboard()">
+                </div>
+                <div class="control-group">
+                    <div class="benchmark-toggle" onclick="toggleBenchmark()">
+                        <div class="toggle-switch" id="benchmarkToggle">
+                            <div class="toggle-slider"></div>
+                        </div>
+                        <span style="color: var(--accent); font-weight: 600;">Branchenbenchmark</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-section">
+            <div class="loading-overlay" id="loadingOverlay">
+                <div class="loading-spinner"></div>
+            </div>
+            <div class="chart-header">
+                <div>
+                    <h2 class="chart-title" id="chartTitle">RevPAR Entwicklung - Front Office</h2>
+                    <p class="chart-subtitle" id="chartSubtitle">Januar 2024 - Juni 2024 • vs. 4-Sterne Hotels Deutschland</p>
+                </div>
+                <div class="chart-controls">
+                    <div class="chart-type-selector">
+                        <button class="chart-type-btn active" onclick="setChartType('line')">Linie</button>
+                        <button class="chart-type-btn" onclick="setChartType('bar')">Balken</button>
+                        <button class="chart-type-btn" onclick="setChartType('area')">Fläche</button>
+                    </div>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="mainChart"></canvas>
+            </div>
+        </div>
+
+        <div class="insights-section">
+            <div class="insight-card">
+                <div class="insight-header">
+                    <div class="insight-icon"></div>
+                    <h3 class="insight-title">RevPAR Performance</h3>
+                    <div class="insight-priority high">Hoch</div>
+                </div>
+                <div class="insight-content">
+                    Ihr RevPAR liegt mit <span class="insight-metric">€70.18</span> deutlich über dem Branchendurchschnitt von <span class="insight-metric">€58.40</span>. Das entspricht einer Outperformance von <span class="insight-metric">+20.2%</span>.
+                </div>
+                <div class="insight-action">
+                    <div class="insight-action-title">Empfehlung</div>
+                    <div class="insight-action-text">Nutzen Sie diese starke Position für Premium-Pricing-Strategien und fokussieren Sie sich auf Direktbuchungen.</div>
+                </div>
+            </div>
+            <div class="insight-card">
+                <div class="insight-header">
+                    <div class="insight-icon"></div>
+                    <h3 class="insight-title">Saisonale Trends</h3>
+                    <div class="insight-priority medium">Mittel</div>
+                </div>
+                <div class="insight-content">
+                    Der Mai war Ihr stärkster Monat mit <span class="insight-metric">€78.20</span> RevPAR. Die Sommersaison zeigt konstantes Wachstum von <span class="insight-metric">+15%</span> gegenüber Vorjahr.
+                </div>
+                <div class="insight-action">
+                    <div class="insight-action-title">Optimierung</div>
+                    <div class="insight-action-text">Implementieren Sie dynamische Preisstrategien für die Hochsaison und erhöhen Sie die Mindestaufenthaltsdauer.</div>
+                </div>
+            </div>
+            <div class="insight-card">
+                <div class="insight-header">
+                    <div class="insight-icon"></div>
+                    <h3 class="insight-title">Vertriebskanal-Analyse</h3>
+                    <div class="insight-priority low">Niedrig</div>
+                </div>
+                <div class="insight-content">
+                    Direktbuchungen machen <span class="insight-metric">34%</span> aus, während OTA-Provisionen bei <span class="insight-metric">18%</span> liegen. Potenzial für <span class="insight-metric">€8.500</span> jährliche Einsparungen.
+                </div>
+                <div class="insight-action">
+                    <div class="insight-action-title
